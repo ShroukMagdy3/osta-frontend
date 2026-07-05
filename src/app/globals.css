@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --primary-color: #1C4B41;
+  --secondary-color: #F1F7E7;
+  --accent-color: #B3E718;
+  --accent-hover: #9bd015;
+  --gray-color: #636261;
+
+  --purple-light: #E0E1F3;
+  --purple-dark: #5D508D;
+}
+
+.gradient-brand {
+  background: linear-gradient(to right, 
+    #1C4B41 0%, #316044 7%, #457546 14%, 
+    #5A8B46 21%, #6FA143 29%, #85B83D 36%, 
+    #9CCF32 43%, #B3E718 50%, #B3E718 100%
+  );
+}
+
+.primary-gradient {
+  background: linear-gradient(to bottom, #1C4B41, #112D27);
+}
+
+.danger-gradient {
+  background: linear-gradient(
+    to bottom,
+    #7F1D1D 0%,
+    #B91C1C 100%
+  );
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keep overlays above page content */
+:root {
+  --overlay-z-index: 99999;
+}
+
+nav,
+[role="navigation"] {
+  position: relative;
+  z-index: 60;
+}
+
+body {
+  overflow-x: hidden;
+}
