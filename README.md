@@ -16,4 +16,4 @@ This repository contains the **Next.js frontend**, built with TypeScript and Tai
 - **Paymob** payment gateway integration
 
 ### Backend
-The backend API is built with **NestJS + MongoDB**. See [osta-backend](link-to-backend-repo) for the API source.
+The backend API is built with **NestJS + MongoDB**. See the [Backend Repository](https://github.com/ShroukMagdy3/backend_osta) for the API source.
