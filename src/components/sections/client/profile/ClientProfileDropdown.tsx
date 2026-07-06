@@ -1,7 +1,6 @@
 "use client";
 
 import { RefObject, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, CreditCard, FileText, LogOut } from "lucide-react";
@@ -16,56 +15,12 @@ interface Props {
   currentUser: CurrentUser | null;
   onClose: () => void;
   anchorRef: RefObject<HTMLElement | null>;
-
 }
 
 export default function ClientProfileDropdown({ currentUser, onClose, anchorRef }: Props) {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userInitial = currentUser?.fullName?.charAt(0) ?? "؟";
-
-  useEffect(() => {
-    const position = () => {
-      const el = dropdownRef.current;
-      const anchor = anchorRef?.current;
-      if (!el) return;
-
-      // mobile: let CSS handle full-width fixed panel
-      if (!anchor || window.innerWidth < 640) {
-        el.style.removeProperty("left");
-        el.style.removeProperty("top");
-        return;
-      }
-
-      const rect = anchor.getBoundingClientRect();
-      const dropdownWidth = el.offsetWidth;
-
-      let left = rect.left - dropdownWidth + rect.width;
-      if (left < 8) left = 8;
-      const maxLeft = window.innerWidth - dropdownWidth - 8;
-      if (left > maxLeft) left = maxLeft;
-
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom - 8;
-      const dropdownHeight = el.offsetHeight || 260;
-
-      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-        el.style.top = `${rect.top - dropdownHeight - 8}px`;
-      } else {
-        el.style.top = `${rect.bottom + 8}px`;
-      }
-
-      el.style.left = `${left}px`;
-    };
-
-    position();
-    window.addEventListener("resize", position);
-    window.addEventListener("scroll", position, true);
-    return () => {
-      window.removeEventListener("resize", position);
-      window.removeEventListener("scroll", position, true);
-    };
-  }, [anchorRef]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -79,8 +34,6 @@ export default function ClientProfileDropdown({ currentUser, onClose, anchorRef 
       }
     };
 
-    // بنأخر إضافة الـ listener شوية عشان نتجنب إن نفس اللمسة اللي فتحت
-    // الدروب داون (على الموبايل) تتفسر كـ "كليك برة" وتقفله فورًا في نفس اللحظة.
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside);
     }, 0);
@@ -105,12 +58,18 @@ export default function ClientProfileDropdown({ currentUser, onClose, anchorRef 
     }
   };
 
-  return createPortal(
+  // 🔧 الفكس هنا: بدل ما نستخدم position: fixed + حساب الإحداثيات بالـ JS
+  // (getBoundingClientRect) + createPortal لـ document.body — اللي كان
+  // بيسبب أحيانًا ظهور الدروب داون في مكان غلط أو فوق عنصر تاني بيمنع
+  // الكليك من الوصول للينكات — بقينا نستخدم absolute بسيط جوه نفس الـ
+  // div الأب (profileRef) اللي أصلاً عليه className="relative" في الـ
+  // Navbar. كده الدروب داون بيتولد في مكانه الطبيعي في الـ DOM، مفيش
+  // أي تضارب في الـ stacking context، والكليك بيوصل صح للينكات.
+  return (
     <div
       ref={dropdownRef}
       dir="rtl"
-      style={{ position: "fixed" }}
-      className="fixed inset-x-3 top-16 z-[99999] w-[calc(100vw-1.5rem)] overflow-hidden rounded-[20px] border border-[#EAECE8] bg-white shadow-[0_18px_42px_rgba(17,45,39,0.18)] sm:inset-auto sm:top-auto sm:w-[min(18rem,calc(100vw-1rem))]"
+      className="absolute top-full end-0 z-[99999] mt-2 w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-[20px] border border-[#EAECE8] bg-white shadow-[0_18px_42px_rgba(17,45,39,0.18)]"
     >
       <div className="flex items-center gap-3 px-5 py-5 primary-gradient">
         <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white text-lg font-bold text-[var(--primary-color)]">
@@ -160,7 +119,6 @@ export default function ClientProfileDropdown({ currentUser, onClose, anchorRef 
           <LogOut size={18} />
         </button>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

@@ -32,12 +32,32 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "مرفوضة",
 };
 
+const DESCRIPTION_LABELS: Record<string, string> = {
+  payment: "دفع من العميل",
+  withdrawal: "طلب سحب",
+  refund: "استرجاع مبلغ",
+  bonus: "مكافأة",
+  credit: "دفع من العميل",
+  debit: "طلب سحب",
+};
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ar-EG", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+function getTransactionDescription(
+  tx: WalletData["transactions"][number]
+) {
+  if (DESCRIPTION_LABELS[tx.description]) {
+    return DESCRIPTION_LABELS[tx.description];
+  }
+  // Fallback: لو الوصف مش موجود في الـ mapping، بنعرض نص عربي
+  // بناءً على نوع العملية بدل النص الخام الجاي من السيرفر
+  return tx.type === "credit" ? "دفع من العميل" : "طلب سحب";
 }
 
 export default function WalletPage() {
@@ -73,7 +93,10 @@ export default function WalletPage() {
   }, []);
 
   return (
-    <div dir="rtl" className="max-w-3xl mx-auto rounded-3xl shadow-xl border border-gray-200">
+    <div
+      dir="rtl"
+      className="max-w-3xl mx-auto rounded-3xl shadow-xl border border-gray-200"
+    >
       {/* Header */}
       <div className="bg-[#F8F9F7] px-3 py-4 rounded-t-3xl ">
         <div className="flex items-center justify-between  px-6 py-5">
@@ -181,69 +204,69 @@ export default function WalletPage() {
             مدة لا تتجاوز 48 ساعة عمل
           </p>
         </div>
-      </div>
 
-      {!error && wallet && wallet.transactions.length > 0 && (
-        <div className="mt-6">
-          <h4
-            className="mb-3 text-sm font-bold"
-            style={{ color: "var(--gray-color)" }}
-          >
-            آخر العمليات
-          </h4>
-          <div className="flex flex-col gap-2">
-            {wallet.transactions
-              .slice()
-              .reverse()
-              .map((tx) => (
-                <div
-                  key={tx._id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
+        {/* Transactions card */}
+        {!error && wallet && wallet.transactions.length > 0 && (
+          <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h4
+              className="mb-4 text-sm font-bold"
+              style={{ color: "var(--gray-color)" }}
+            >
+              آخر العمليات
+            </h4>
+            <div className="flex flex-col gap-3">
+              {wallet.transactions
+                .slice()
+                .reverse()
+                .map((tx) => (
+                  <div
+                    key={tx._id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                        style={{
+                          backgroundColor:
+                            tx.type === "credit"
+                              ? "var(--primary-color)"
+                              : "#FEE2E2",
+                        }}
+                      >
+                        {tx.type === "credit" ? (
+                          <ArrowDownLeft className="h-4 w-4 text-white" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4 text-red-500" />
+                        )}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 line-clamp-1 max-w-[220px]">
+                          {getTransactionDescription(tx)}
+                        </p>
+                        <p className="mt-1 text-[11px] text-gray-400">
+                          {formatDate(tx.createdAt)} ·{" "}
+                          {STATUS_LABELS[tx.status] ?? tx.status}
+                        </p>
+                      </div>
+                    </div>
                     <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                      className="text-base font-extrabold shrink-0"
                       style={{
-                        backgroundColor:
+                        color:
                           tx.type === "credit"
                             ? "var(--primary-color)"
-                            : "#FEE2E2",
+                            : "#EF4444",
                       }}
                     >
-                      {tx.type === "credit" ? (
-                        <ArrowDownLeft
-                          className="h-4 w-4"
-                          style={{ color: "var(--primary-color)" }}
-                        />
-                      ) : (
-                        <ArrowUpRight className="h-4 w-4 text-red-500" />
-                      )}
+                      {tx.amount.toLocaleString("en-US")}
+                      {tx.type === "credit" ? "+" : "-"}
                     </span>
-                    <div>
-                      <p className="text-xs font-bold text-gray-700 line-clamp-1 max-w-[220px]">
-                        {tx.description}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-gray-400">
-                        {formatDate(tx.createdAt)} ·{" "}
-                        {STATUS_LABELS[tx.status] ?? tx.status}
-                      </p>
-                    </div>
                   </div>
-                  <span
-                    className="text-sm font-bold shrink-0"
-                    style={{
-                      color:
-                        tx.type === "credit" ? "var(--primary-color)" : "#EF4444",
-                    }}
-                  >
-                    {tx.type === "credit" ? "+" : "-"}
-                    {tx.amount.toLocaleString("en-US")}
-                  </span>
-                </div>
-              ))}
+                ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {showWithdrawModal && (
         <WithdrawalModal
